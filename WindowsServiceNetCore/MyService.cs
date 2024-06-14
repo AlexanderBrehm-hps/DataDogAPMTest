@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,23 @@ namespace WindowsServiceNetCore
 {
     public sealed class MyService
     {
+        public void MakeWebCall(bool shouldRunLikeCrap)
+        {
+            string url = "https://www.google.com";
+
+            var request = WebRequest.Create(url);
+            using (var httpWebResponse = (HttpWebResponse)request.GetResponse())
+            {
+                var status = httpWebResponse.StatusDescription;
+                using (var dataStream = httpWebResponse.GetResponseStream())
+                using (var reader = new StreamReader(dataStream))
+                {
+                    var response = reader.ReadToEnd();
+                    Console.WriteLine($"Web Call - status {status}");
+                }
+            }
+        }
+
         public string DoIntensiveWork()
         {
             var random = new Random();

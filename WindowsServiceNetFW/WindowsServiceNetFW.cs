@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Net;
+using System.IO;
 
 namespace WindowsServiceNetFW
 {
@@ -36,26 +38,31 @@ namespace WindowsServiceNetFW
             timer = new System.Timers.Timer()
             {
                 Interval = 60000 // 1 minute
+                //Interval = 30000 // 30 seconds
             };
             timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
         }
 
-        public void onDebug()
+        public void MakeWebCall(bool shouldRunLikeCrap)
         {
-            OnStart(null);
+            string url = "https://www.google.com";
+
+            var request = WebRequest.Create(url);
+            using (var httpWebResponse = (HttpWebResponse)request.GetResponse())
+            {
+                var status = httpWebResponse.StatusDescription;
+                using (var dataStream = httpWebResponse.GetResponseStream())
+                using (var reader = new StreamReader(dataStream))
+                {
+                    var response = reader.ReadToEnd();
+                    Console.WriteLine($"Web Call - status {status}");
+                }
+            }
         }
 
-        public void OnTimer(object sender, ElapsedEventArgs args)
+        public void DoBusyWork(bool shouldRunLikeCrap)
         {
             var random = new Random();
-            bool shouldRunLikeCrap = false;
-
-            var output = random.Next(1, 4);
-
-            // 1/4 chance of crap run
-            if (output == 4)
-                shouldRunLikeCrap = true;
-
             int minValueMs = 1000; // 1 second
             int maxValueMs = minValueMs * 3;
 
@@ -66,8 +73,6 @@ namespace WindowsServiceNetFW
                 maxValueMs *= 2;
             }
 
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
             int sleepingMs;
             for (int i = 0; i < 10; i++)
             {
@@ -84,6 +89,29 @@ namespace WindowsServiceNetFW
                 }
                 Thread.Sleep(sleepingMs);
             }
+        }
+
+        public void onDebug()
+        {
+            OnStart(null);
+        }
+
+        public void OnTimer(object sender, ElapsedEventArgs args)
+        {
+            var stopWatch = new Stopwatch();
+            var random = new Random();
+            bool shouldRunLikeCrap = false;
+
+            var output = random.Next(1, 4);
+
+            // 1/4 chance of crap run
+            if (output == 4)
+                shouldRunLikeCrap = true;
+
+            stopWatch.Start();
+
+            MakeWebCall(shouldRunLikeCrap);
+            DoBusyWork(shouldRunLikeCrap);
 
             stopWatch.Stop();
             var crapString = (shouldRunLikeCrap ? " (crap)" : "");

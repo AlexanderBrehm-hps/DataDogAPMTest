@@ -1,8 +1,6 @@
 namespace WindowsServiceNetCore
 {
-    public sealed class WindowsBackgroundService(
-        MyService myService,
-        ILogger<WindowsBackgroundService> logger) : BackgroundService
+    public sealed class WindowsBackgroundService(MyService myService, ILogger<WindowsBackgroundService> logger) : BackgroundService
     {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -10,6 +8,8 @@ namespace WindowsServiceNetCore
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
+                    logger.LogInformation("Making web call");
+                    myService.MakeWebCall(false);
                     string output = myService.DoIntensiveWork();
                     logger.LogInformation($"{output}", output);
 
