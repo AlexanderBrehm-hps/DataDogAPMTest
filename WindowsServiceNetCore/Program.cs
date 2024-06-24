@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
+using System.Diagnostics;
 
 namespace WindowsServiceNetCore
 {
@@ -19,7 +20,7 @@ namespace WindowsServiceNetCore
 
             builder.Services.AddSingleton<MyService>();
             builder.Services.AddHostedService<WindowsBackgroundService>();
-            
+
             var host = builder.Build();
             host.Run();
         }

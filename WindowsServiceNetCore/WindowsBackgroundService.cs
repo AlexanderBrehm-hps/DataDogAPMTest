@@ -1,17 +1,35 @@
+using System.Diagnostics;
+
 namespace WindowsServiceNetCore
 {
-    public sealed class WindowsBackgroundService(MyService myService, ILogger<WindowsBackgroundService> logger) : BackgroundService
+    public sealed class WindowsBackgroundService : BackgroundService
     {
+        MyService _myService;
+        ILogger<WindowsBackgroundService> _logger;
+
+        public WindowsBackgroundService(MyService myService, ILogger<WindowsBackgroundService> logger)
+        {
+            _myService = myService;
+            _logger = logger;
+
+            var message = $"In OnStart{Environment.NewLine}";
+            message += $"Launched from {Environment.CurrentDirectory}{Environment.NewLine}";
+            message += $"Physical location {AppDomain.CurrentDomain.BaseDirectory}{Environment.NewLine}";
+            message += $"AppContext.BaseDir {AppContext.BaseDirectory}{Environment.NewLine}";
+            message += $"Runtime Call {Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)}";
+            _logger.LogInformation(message);
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    logger.LogInformation("Making web call");
-                    myService.MakeWebCall(false);
-                    string output = myService.DoIntensiveWork();
-                    logger.LogInformation($"{output}", output);
+                    _logger.LogInformation($"{_myService.MakeHttpRequest(false)}");
+                    _logger.LogInformation($"{_myService.MakeWebRequest(false)}");
+                    string output = _myService.DoIntensiveWork();
+                    _logger.LogInformation($"{output}", output);
 
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
@@ -23,7 +41,7 @@ namespace WindowsServiceNetCore
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "{Message}", ex.Message);
+                _logger.LogError(ex, "{Message}", ex.Message);
 
                 // Terminates this process and returns an exit code to the operating system.
                 // This is required to avoid the 'BackgroundServiceExceptionBehavior', which

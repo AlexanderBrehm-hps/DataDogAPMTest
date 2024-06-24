@@ -1,17 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WindowsServiceNetCore
 {
     public sealed class MyService
     {
-        public void MakeWebCall(bool shouldRunLikeCrap)
+        public string MakeWebRequest(bool shouldRunLikeCrap)
         {
             string url = "https://www.google.com";
 
@@ -23,8 +17,21 @@ namespace WindowsServiceNetCore
                 using (var reader = new StreamReader(dataStream))
                 {
                     var response = reader.ReadToEnd();
-                    Console.WriteLine($"Web Call - status {status}");
+                    return $"Web Request - status {status}";
                 }
+            }
+        }
+
+        public string MakeHttpRequest(bool shouldRunLikeCrap)
+        {
+            string url = "https://www.yahoo.com";
+
+            using (var client = new HttpClient())
+            {
+                var responseTask = client.GetAsync(url);
+                responseTask.Wait();
+                var result = responseTask.Result;
+                return $"Http Request - status {result.StatusCode}";
             }
         }
 

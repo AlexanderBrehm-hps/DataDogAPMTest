@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ServiceProcess;
 
 namespace WindowsServiceNetFW
 {
@@ -22,9 +17,9 @@ namespace WindowsServiceNetFW
 #else
             //In Release this section is used. This is the "normal" way.
             ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[] 
-            { 
-                new WindowsServiceNetFW() 
+            ServicesToRun = new ServiceBase[]
+            {
+                new WindowsServiceNetFW()
             };
             ServiceBase.Run(ServicesToRun);
 #endif

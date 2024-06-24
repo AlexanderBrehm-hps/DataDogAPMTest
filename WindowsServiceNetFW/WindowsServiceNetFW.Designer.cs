@@ -33,7 +33,7 @@
             // 
             // WindowsServiceNetFW
             // 
-            this.ServiceName = "Service1";
+            this.ServiceName = "Hps-WindowsServiceNetFw";
             ((System.ComponentModel.ISupportInitialize)(this.eventLog1)).EndInit();
 
         }

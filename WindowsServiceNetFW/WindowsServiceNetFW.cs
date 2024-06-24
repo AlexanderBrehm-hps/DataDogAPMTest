@@ -1,22 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Net;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.ServiceProcess;
+using System.Threading;
+using System.Timers;
 
 namespace WindowsServiceNetFW
 {
     public partial class WindowsServiceNetFW : ServiceBase
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private System.Timers.Timer timer;
         private int eventId = 1;
 
@@ -27,12 +23,8 @@ namespace WindowsServiceNetFW
             string eventSource = "Hps-WindowsServiceNetFW";
             string logName = "Application";
 
-            eventLog1 = new EventLog(logName);
             if (!EventLog.SourceExists(eventSource))
                 EventLog.CreateEventSource(eventSource, logName);
-
-            eventLog1.Source = eventSource;
-            eventLog1.Log = logName;
 
             // Set up a timer that triggers every minute.
             timer = new System.Timers.Timer()
@@ -43,7 +35,7 @@ namespace WindowsServiceNetFW
             timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
         }
 
-        public void MakeWebCall(bool shouldRunLikeCrap)
+        public string MakeWebRequest(bool shouldRunLikeCrap)
         {
             string url = "https://www.google.com";
 
@@ -55,8 +47,21 @@ namespace WindowsServiceNetFW
                 using (var reader = new StreamReader(dataStream))
                 {
                     var response = reader.ReadToEnd();
-                    Console.WriteLine($"Web Call - status {status}");
+                    return $"Web Request - status {status}";
                 }
+            }
+        }
+
+        public string MakeHttpRequest(bool shouldRunLikeCrap)
+        {
+            string url = "https://www.yahoo.com";
+
+            using (var client = new HttpClient())
+            {
+                var responseTask = client.GetAsync(url);
+                responseTask.Wait();
+                var result = responseTask.Result;
+                return $"Http Request - status {result.StatusCode}";
             }
         }
 
@@ -110,12 +115,14 @@ namespace WindowsServiceNetFW
 
             stopWatch.Start();
 
-            MakeWebCall(shouldRunLikeCrap);
+            log.Info(MakeHttpRequest(shouldRunLikeCrap));
+            log.Info(MakeWebRequest(shouldRunLikeCrap));
             DoBusyWork(shouldRunLikeCrap);
 
             stopWatch.Stop();
             var crapString = (shouldRunLikeCrap ? " (crap)" : "");
-            eventLog1.WriteEntry($"OnTimer event - Job Finished{crapString}. Took {stopWatch.ElapsedMilliseconds} ms", EventLogEntryType.Information, eventId++);
+            string message = $"OnTimer event - Job Finished{crapString}. Took {stopWatch.ElapsedMilliseconds} ms";
+            log.Info(message);
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -123,12 +130,19 @@ namespace WindowsServiceNetFW
 
         protected override void OnStart(string[] args)
         {
-            eventLog1.WriteEntry("In OnStart.");
-            ServiceStatus serviceStatus = new ServiceStatus();
+            var serviceStatus = new ServiceStatus();
             serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;
             serviceStatus.dwWaitHint = 100000;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
+            var message = $"In OnStart{Environment.NewLine}";
+            message += $"Launched from {Environment.CurrentDirectory}{Environment.NewLine}";
+            message += $"Physical location {AppDomain.CurrentDomain.BaseDirectory}{Environment.NewLine}";
+            message += $"AppContext.BaseDir {AppContext.BaseDirectory}{Environment.NewLine}";
+            message += $"Runtime Call {Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)}";
+            log.Info(message);
+
+            OnTimer(this, null);
             timer.Start();
 
             // Update the service state to Running.
@@ -138,7 +152,8 @@ namespace WindowsServiceNetFW
 
         protected override void OnStop()
         {
-            eventLog1.WriteEntry("In OnStop.");
+            string message = "In OnStop.";
+            log.Info(message);
             // Update the service state to Stopped.
             ServiceStatus serviceStatus = new ServiceStatus();
             serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
