@@ -22,6 +22,21 @@ namespace WindowsServiceNetCore
             }
         }
 
+        public string MakeProcessRequest(bool shouldRunLikeCrap)
+        {
+            var stopWatch = new Stopwatch();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo("cmd.exe", "/c timeout 1")
+            };
+
+            stopWatch.Start();
+            process.Start();
+            process.WaitForExit();
+            stopWatch.Stop();
+            return $"Shelled out for {stopWatch.ElapsedMilliseconds} ms";
+        }
+
         public string MakeHttpRequest(bool shouldRunLikeCrap)
         {
             string url = "https://www.yahoo.com";

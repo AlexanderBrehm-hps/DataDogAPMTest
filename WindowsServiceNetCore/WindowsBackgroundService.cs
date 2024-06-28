@@ -28,6 +28,7 @@ namespace WindowsServiceNetCore
                 {
                     _logger.LogInformation($"{_myService.MakeHttpRequest(false)}");
                     _logger.LogInformation($"{_myService.MakeWebRequest(false)}");
+                    _logger.LogInformation($"{_myService.MakeProcessRequest(false)}");
                     string output = _myService.DoIntensiveWork();
                     _logger.LogInformation($"{output}", output);
 

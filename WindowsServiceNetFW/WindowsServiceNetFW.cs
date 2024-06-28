@@ -1,12 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.ServiceProcess;
-using System.Threading;
+using System.Text;
+using System.Threading.Tasks;
 using System.Timers;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Net;
+using System.IO;
+using System.Net.Http;
 
 namespace WindowsServiceNetFW
 {
@@ -26,6 +32,9 @@ namespace WindowsServiceNetFW
             if (!EventLog.SourceExists(eventSource))
                 EventLog.CreateEventSource(eventSource, logName);
 
+            eventLog1.Source = eventSource;
+            eventLog1.Log = logName;
+
             // Set up a timer that triggers every minute.
             timer = new System.Timers.Timer()
             {
@@ -33,6 +42,21 @@ namespace WindowsServiceNetFW
                 //Interval = 30000 // 30 seconds
             };
             timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
+        }
+
+        public string MakeProcessRequest(bool shouldRunLikeCrap)
+        {
+            var stopWatch = new Stopwatch();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo("cmd.exe", "/c timeout 1")
+            };
+
+            stopWatch.Start();
+            process.Start();
+            process.WaitForExit();
+            stopWatch.Stop();
+            return $"Shelled out for {stopWatch.ElapsedMilliseconds} ms";
         }
 
         public string MakeWebRequest(bool shouldRunLikeCrap)
@@ -115,13 +139,18 @@ namespace WindowsServiceNetFW
 
             stopWatch.Start();
 
-            log.Info(MakeHttpRequest(shouldRunLikeCrap));
-            log.Info(MakeWebRequest(shouldRunLikeCrap));
+            var output1 = MakeHttpRequest(shouldRunLikeCrap);
+            log.Info(output1);
+            var output2 = MakeWebRequest(shouldRunLikeCrap);
+            log.Info(output2);
+            var output3 = MakeProcessRequest(shouldRunLikeCrap);
+            log.Info(output3);
             DoBusyWork(shouldRunLikeCrap);
 
             stopWatch.Stop();
             var crapString = (shouldRunLikeCrap ? " (crap)" : "");
             string message = $"OnTimer event - Job Finished{crapString}. Took {stopWatch.ElapsedMilliseconds} ms";
+            eventLog1.WriteEntry(message, EventLogEntryType.Information, eventId++);
             log.Info(message);
         }
 
